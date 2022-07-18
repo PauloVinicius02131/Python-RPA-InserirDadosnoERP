@@ -1,8 +1,9 @@
 # Bibliotecas
+from unittest import case
 import selenium
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium import webdriver
@@ -34,6 +35,11 @@ df.columns = ['Codigo', 'Qnt']
 # Visualizar DataFrame de Input.
 print(df.head())
 print(type(df))
+
+# Parametros de Ambiente
+periodo = date.today().strftime("%d/%m/%Y")
+usuario = 'AUTOBOT'
+almoxarifado = 'Almoxarifado Ansal'
 
 dfSaida = {}
 
@@ -67,7 +73,6 @@ def fLogin():
         input('Pressione Enter para continuar tentar novamente...')
         fLogin()
 
-
 def fNavegacaoCompras():
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.LINK_TEXT, 'Módulos'))).click()
@@ -81,20 +86,47 @@ def fNavegacaoCompras():
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.LINK_TEXT, 'Solicitação de Compras'))).click()
 
-
-def fAbrirSolicitacao():
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.NAME, 'idSolicitacaoCompra'))).clear()
-
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.NAME, 'idSolicitacaoCompra'))).send_keys('61980')
+def fFiltrosSolicitacao():  
+    formulario = driver.find_element(By.NAME, 'formulario')
+    
+    formularioInputs = formulario.find_elements(By.TAG_NAME, 'input')
+    
+    for item in formularioInputs:
+        driver.execute_script("arguments[0].setAttribute('value',arguments[1])",item, '')
+        formInput = (item.get_attribute('name'))
+        if formInput == 'dtAbertura': driver.execute_script("arguments[0].setAttribute('value',arguments[1])",item, periodo)
+        elif formInput == 'dtFechamento': driver.execute_script("arguments[0].setAttribute('value',arguments[1])",item, periodo)
+    
+    formularioSelects = formulario.find_elements(By.TAG_NAME, 'select')
+    
+    for item in formularioSelects:
+        switch =  (item.get_attribute('name'))
+        if switch == 'csTipo' : Select(driver.find_element(By.NAME, 'csTipo')).select_by_visible_text('Normal')
+        elif switch == 'csStatus' : Select(driver.find_element(By.NAME, 'csStatus')).select_by_visible_text('Aberta')
+        elif switch == 'idAlmoxarifado' : Select(driver.find_element(By.NAME, 'idAlmoxarifado')).select_by_visible_text(almoxarifado)
+        elif switch == 'idUsuario' : Select(driver.find_element(By.NAME, 'idUsuario')).select_by_visible_text('AUTOBOT')
 
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.NAME, 'Pesquisar'))).click()
+        
+def fAbrirSolicitacao():
+    # Aguardar pesquisa terminar
+    WebDriverWait(driver, 10).until(EC.invisibility_of_element((By.ID, 'ajaxLoader')))
 
-    WebDriverWait(driver, 20).until(
-        EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/section/div[5]/div[3]/form/center/div/center/table/tbody/tr[2]/td/div/table/tbody/tr/td[1]/a'))).click()
-
+    WebDriverWait(driver,5).until(EC.presence_of_all_elements_located((By.ID,'registrosvlistacadastrodesolicitacaodecompras')))
+    
+    elementoPesquisado = driver.find_element(By.ID ,'registrosvlistacadastrodesolicitacaodecompras').find_elements(By.TAG_NAME, 'tbody')[0].text
+    
+    if elementoPesquisado == 'Nenhum Registro Localizado':
+        try:
+            driver.find_element(By.NAME, '<u>I</u>nserir').click()
+            
+            
+        except:
+            print('Erro ao cadastrar')
+    else:
+        WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.CLASS_NAME, 'linha1'))).click()
 
 def fPreencherItensDaCotacao():
     for index, linha in df.iterrows():
