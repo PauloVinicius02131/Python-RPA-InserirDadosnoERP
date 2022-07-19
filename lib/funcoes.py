@@ -1,5 +1,6 @@
 # Bibliotecas
 from unittest import case
+from xmlrpc.client import Boolean
 import selenium
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.support import expected_conditions as EC
@@ -17,29 +18,36 @@ import sys
 
 import pandas as pd
 
+
 # Parâmetros Tabela Excel Input de Dados.
 caminho = os.path.abspath(__file__ + "/../../")
 caminho = caminho + "\entrada"
 nomearquivo = "\dadosEntrada.xlsx"
 caminho = caminho + nomearquivo
-tabela = "Plan1"
+
+# DataFrame Input de Dados.
+tabela = "Dados"
 cabecalho = 0
-print(caminho)
-
 df = pd.read_excel(caminho, sheet_name=tabela, header=cabecalho)
-
-# Determinar coluna lida e tratar o DataFrame.
 df = df['robo'].str.split(';', expand=True)
 df.columns = ['Codigo', 'Qnt']
 
-# Visualizar DataFrame de Input.
 print(df.head())
-print(type(df))
+
+#Dicionario Input de Dados.
+tabela = "Cabecalhos"
+cabecalho = 0
+
+dic = pd.read_excel(caminho, sheet_name=tabela, header=cabecalho, dtype=str)
+almoxarifado = str(dic['Almoxarifado'][0])
+empresa = str(dic['Empresa'][0])
+
+print('A empresa selecionada é: ' + empresa)
+print('O almoxarifado selecionado é: ' + almoxarifado)
 
 # Parametros de Ambiente
 periodo = date.today().strftime("%d/%m/%Y")
 usuario = 'AUTOBOT'
-almoxarifado = 'Almoxarifado Ansal'
 
 dfSaida = {}
 
@@ -103,7 +111,7 @@ def fFiltrosSolicitacao():
         switch =  (item.get_attribute('name'))
         if switch == 'csTipo' : Select(driver.find_element(By.NAME, 'csTipo')).select_by_visible_text('Normal')
         elif switch == 'csStatus' : Select(driver.find_element(By.NAME, 'csStatus')).select_by_visible_text('Aberta')
-        elif switch == 'idAlmoxarifado' : Select(driver.find_element(By.NAME, 'idAlmoxarifado')).select_by_visible_text(almoxarifado)
+        elif switch == 'idAlmoxarifado' : Select(driver.find_element(By.NAME, 'idAlmoxarifado')).select_by_visible_text('Almoxarifado Ansal')  #Fazer depara para o almoxarifado selecionado
         elif switch == 'idUsuario' : Select(driver.find_element(By.NAME, 'idUsuario')).select_by_visible_text('AUTOBOT')
 
     WebDriverWait(driver, 10).until(
@@ -121,32 +129,54 @@ def fAbrirSolicitacao():
         try:
             driver.find_element(By.NAME, '<u>I</u>nserir').click()
             
+            formulario = driver.find_element(By.NAME, 'formulario')
             
+            formularioSelects = formulario.find_elements(By.TAG_NAME, 'select')
+            
+            for item in formularioSelects:
+                switch =  (item.get_attribute('name'))
+                if switch == 'idAlmoxarifado' : Select(driver.find_element(By.NAME, 'idAlmoxarifado')).select_by_visible_text('Almoxarifado Ansal')
+                elif switch == 'idEmpresa' : Select(driver.find_element(By.NAME, 'idEmpresa')).select_by_visible_text('ANSAL Matriz')
+                elif switch == 'csTipo' : Select(driver.find_element(By.NAME, 'csTipo')).select_by_visible_text('Normal')
+            
+            WebDriverWait(driver, 10).until(EC.invisibility_of_element((By.ID, 'ajaxLoader')))
+
+            driver.find_element(By.NAME, '<u>I</u>nserir').click()
+
         except:
-            print('Erro ao cadastrar')
+            print('Erro ao cadastrar uma nova solicitação de compra.')
     else:
-        WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.CLASS_NAME, 'linha1'))).click()
+        print('Achei uma solicitação ja criada hoje e aberta.')
+        linha = driver.find_elements(By.CLASS_NAME, 'linha1')
+        linha[0].find_element(By.TAG_NAME, 'a').click()
 
 def fPreencherItensDaCotacao():
+    WebDriverWait(driver, 10).until(EC.invisibility_of_element((By.ID, 'ajaxLoader')))
+    
     for index, linha in df.iterrows():
-        try:
             WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.NAME, 'input_idItem'))).click()
-
-            time.sleep(1)
 
             WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.NAME, 'input_idItem'))).clear()
 
             WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.NAME, 'input_idItem'))).send_keys(linha['Codigo'])
-
-            time.sleep(1)
-
+            
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.NAME, 'input_idItem'))).send_keys(Keys.ENTER)
+            
+            teste = driver.find_element(By.ID, 'ajaxLoader').get_attribute('style')
+            print(teste)
+            
+            time.sleep(5)
+            
+            teste1 = driver.find_element(By.ID, 'ajaxLoader').get_attribute('style')
+            print(teste1)
+        
             WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.NAME, 'qtInicialItem'))).click()
-
+                       
             WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.NAME, 'qtInicialItem'))).send_keys(Keys.CONTROL, 'a')
 
@@ -159,28 +189,13 @@ def fPreencherItensDaCotacao():
             WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.NAME, 'btnRelacionar'))).click()
 
-            try:
-                WebDriverWait(driver, 3).until(EC.alert_is_present())
-                alerta = driver.switch_to.alert
-                alerta.accept()
-                print("Alerta aceitado")
-            except:
-                print('Não encontrado o  alerta')
+            #Primeiro Alerta - Quantidade relacionada.
+            # WebDriverWait(driver, 3).until(EC.alert_is_present())
+            # alerta = driver.switch_to.alert
+            # alerta.accept()
+            # print("Alerta aceitado")
 
-            time.sleep(1)
 
             WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.NAME, 'Gravar'))).click()
 
-            try:
-                WebDriverWait(driver, 5).until(EC.alert_is_present())
-                alerta = driver.switch_to.alert
-                alerta.accept()
-                print("Alerta aceitado")
-            except:
-                print('Não encontrado o  alerta')
-
-            dfSaida.append(linha['Codigo'])
-
-        except:
-            print('erro no loop')
