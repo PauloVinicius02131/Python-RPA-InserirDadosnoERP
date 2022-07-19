@@ -7,6 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 
 from datetime import date
@@ -34,7 +35,7 @@ df.columns = ['Codigo', 'Qnt']
 
 print(df.head())
 
-#Dicionario Input de Dados.
+# Dicionario Input de Dados.
 tabela = "Cabecalhos"
 cabecalho = 0
 
@@ -58,8 +59,11 @@ elif __file__:
     application_path = os.path.dirname(__file__)
 
 # Variavel do driver
+options = Options()
+options.add_experimental_option('excludeSwitches', ['enable-logging'])
+
 path = application_path + '\chromedriver'
-driver = webdriver.Chrome(path)
+driver = webdriver.Chrome(executable_path=path, chrome_options=options)
 driver.maximize_window()
 # driver.get("http://transnet.grupocsc.com.br/sgtweb/")
 driver.get("http://homolog.vicosa.transoft.com.br/sgtweb/")
@@ -94,52 +98,75 @@ def fNavegacaoCompras():
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.LINK_TEXT, 'Solicitação de Compras'))).click()
 
-def fFiltrosSolicitacao():  
+def fFiltrosSolicitacao():
     formulario = driver.find_element(By.NAME, 'formulario')
-    
+
     formularioInputs = formulario.find_elements(By.TAG_NAME, 'input')
-    
+
     for item in formularioInputs:
-        driver.execute_script("arguments[0].setAttribute('value',arguments[1])",item, '')
+        driver.execute_script(
+            "arguments[0].setAttribute('value',arguments[1])", item, '')
         formInput = (item.get_attribute('name'))
-        if formInput == 'dtAbertura': driver.execute_script("arguments[0].setAttribute('value',arguments[1])",item, periodo)
-        elif formInput == 'dtFechamento': driver.execute_script("arguments[0].setAttribute('value',arguments[1])",item, periodo)
-    
+        if formInput == 'dtAbertura':
+            driver.execute_script(
+                "arguments[0].setAttribute('value',arguments[1])", item, periodo)
+        elif formInput == 'dtFechamento':
+            driver.execute_script(
+                "arguments[0].setAttribute('value',arguments[1])", item, periodo)
+
     formularioSelects = formulario.find_elements(By.TAG_NAME, 'select')
-    
+
     for item in formularioSelects:
-        switch =  (item.get_attribute('name'))
-        if switch == 'csTipo' : Select(driver.find_element(By.NAME, 'csTipo')).select_by_visible_text('Normal')
-        elif switch == 'csStatus' : Select(driver.find_element(By.NAME, 'csStatus')).select_by_visible_text('Aberta')
-        elif switch == 'idAlmoxarifado' : Select(driver.find_element(By.NAME, 'idAlmoxarifado')).select_by_visible_text('Almoxarifado Ansal')  #Fazer depara para o almoxarifado selecionado
-        elif switch == 'idUsuario' : Select(driver.find_element(By.NAME, 'idUsuario')).select_by_visible_text('AUTOBOT')
+        switch = (item.get_attribute('name'))
+        if switch == 'csTipo':
+            Select(driver.find_element(By.NAME, 'csTipo')
+                   ).select_by_visible_text('Normal')
+        elif switch == 'csStatus':
+            Select(driver.find_element(By.NAME, 'csStatus')
+                   ).select_by_visible_text('Aberta')
+        elif switch == 'idAlmoxarifado':
+            Select(driver.find_element(By.NAME, 'idAlmoxarifado')).select_by_visible_text(
+                'Almoxarifado Ansal')  # Fazer depara para o almoxarifado selecionado
+        elif switch == 'idUsuario':
+            Select(driver.find_element(By.NAME, 'idUsuario')
+                   ).select_by_visible_text('AUTOBOT')
 
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.NAME, 'Pesquisar'))).click()
-        
+
 def fAbrirSolicitacao():
     # Aguardar pesquisa terminar
-    WebDriverWait(driver, 10).until(EC.invisibility_of_element((By.ID, 'ajaxLoader')))
+    WebDriverWait(driver, 10).until(
+        EC.invisibility_of_element((By.ID, 'ajaxLoader')))
 
-    WebDriverWait(driver,5).until(EC.presence_of_all_elements_located((By.ID,'registrosvlistacadastrodesolicitacaodecompras')))
-    
-    elementoPesquisado = driver.find_element(By.ID ,'registrosvlistacadastrodesolicitacaodecompras').find_elements(By.TAG_NAME, 'tbody')[0].text
-    
+    WebDriverWait(driver, 5).until(EC.presence_of_all_elements_located(
+        (By.ID, 'registrosvlistacadastrodesolicitacaodecompras')))
+
+    elementoPesquisado = driver.find_element(
+        By.ID, 'registrosvlistacadastrodesolicitacaodecompras').find_elements(By.TAG_NAME, 'tbody')[0].text
+
     if elementoPesquisado == 'Nenhum Registro Localizado':
         try:
             driver.find_element(By.NAME, '<u>I</u>nserir').click()
-            
+
             formulario = driver.find_element(By.NAME, 'formulario')
-            
+
             formularioSelects = formulario.find_elements(By.TAG_NAME, 'select')
-            
+
             for item in formularioSelects:
-                switch =  (item.get_attribute('name'))
-                if switch == 'idAlmoxarifado' : Select(driver.find_element(By.NAME, 'idAlmoxarifado')).select_by_visible_text('Almoxarifado Ansal')
-                elif switch == 'idEmpresa' : Select(driver.find_element(By.NAME, 'idEmpresa')).select_by_visible_text('ANSAL Matriz')
-                elif switch == 'csTipo' : Select(driver.find_element(By.NAME, 'csTipo')).select_by_visible_text('Normal')
-            
-            WebDriverWait(driver, 10).until(EC.invisibility_of_element((By.ID, 'ajaxLoader')))
+                switch = (item.get_attribute('name'))
+                if switch == 'idAlmoxarifado':
+                    Select(driver.find_element(By.NAME, 'idAlmoxarifado')
+                           ).select_by_visible_text('Almoxarifado Ansal')
+                elif switch == 'idEmpresa':
+                    Select(driver.find_element(By.NAME, 'idEmpresa')
+                           ).select_by_visible_text('ANSAL Matriz')
+                elif switch == 'csTipo':
+                    Select(driver.find_element(By.NAME, 'csTipo')
+                           ).select_by_visible_text('Normal')
+
+            WebDriverWait(driver, 10).until(
+                EC.invisibility_of_element((By.ID, 'ajaxLoader')))
 
             driver.find_element(By.NAME, '<u>I</u>nserir').click()
 
@@ -151,51 +178,51 @@ def fAbrirSolicitacao():
         linha[0].find_element(By.TAG_NAME, 'a').click()
 
 def fPreencherItensDaCotacao():
-    WebDriverWait(driver, 10).until(EC.invisibility_of_element((By.ID, 'ajaxLoader')))
-    
+    WebDriverWait(driver, 10).until(
+        EC.invisibility_of_element((By.ID, 'ajaxLoader')))
+
     for index, linha in df.iterrows():
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.NAME, 'input_idItem'))).click()
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, 'input_idItem'))).click()
 
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.NAME, 'input_idItem'))).clear()
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, 'input_idItem'))).clear()
 
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.NAME, 'input_idItem'))).send_keys(linha['Codigo'])
-            
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.NAME, 'input_idItem'))).send_keys(Keys.ENTER)
-            
-            teste = driver.find_element(By.ID, 'ajaxLoader').get_attribute('style')
-            print(teste)
-            
-            time.sleep(5)
-            
-            teste1 = driver.find_element(By.ID, 'ajaxLoader').get_attribute('style')
-            print(teste1)
-        
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.NAME, 'qtInicialItem'))).click()
-                       
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.NAME, 'qtInicialItem'))).send_keys(Keys.CONTROL, 'a')
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, 'input_idItem'))).send_keys(linha['Codigo'])
 
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.NAME, 'qtInicialItem'))).send_keys(Keys.BACKSPACE)
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, 'input_idItem'))).send_keys(Keys.ENTER)
 
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.NAME, 'qtInicialItem'))).send_keys(linha['Qnt'])
+        teste = driver.find_element(By.ID, 'ajaxLoader').get_attribute('style')
+        print(teste)
 
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.NAME, 'btnRelacionar'))).click()
+        time.sleep(5)
 
-            #Primeiro Alerta - Quantidade relacionada.
-            # WebDriverWait(driver, 3).until(EC.alert_is_present())
-            # alerta = driver.switch_to.alert
-            # alerta.accept()
-            # print("Alerta aceitado")
+        teste1 = driver.find_element(
+            By.ID, 'ajaxLoader').get_attribute('style')
+        print(teste1)
 
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, 'qtInicialItem'))).click()
 
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.NAME, 'Gravar'))).click()
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, 'qtInicialItem'))).send_keys(Keys.CONTROL, 'a')
 
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, 'qtInicialItem'))).send_keys(Keys.BACKSPACE)
+
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, 'qtInicialItem'))).send_keys(linha['Qnt'])
+
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, 'btnRelacionar'))).click()
+
+        # Primeiro Alerta - Quantidade relacionada.
+        # WebDriverWait(driver, 3).until(EC.alert_is_present())
+        # alerta = driver.switch_to.alert
+        # alerta.accept()
+        # print("Alerta aceitado")
+
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, 'Gravar'))).click()
