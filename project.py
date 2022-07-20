@@ -5,5 +5,6 @@ fc.fNavegacaoCompras()
 fc.fFiltrosSolicitacao()
 fc.fAbrirSolicitacao()
 fc.fPreencherItensDaCotacao()
+fc.fRelatorioProdutosCotacao()
 
-print('Programa Finalizado')
+print('💥 Programa Finalizado')

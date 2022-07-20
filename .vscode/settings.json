@@ -1,14 +1,19 @@
 {
     "cSpell.words": [
+        "Altual",
         "Ansal",
         "autobot",
         "cabecalho",
         "Cabecalhos",
+        "caminhosaida",
         "Codigo",
+        "colunaslista",
         "Cotacao",
+        "dfteste",
         "dtype",
         "formulario",
         "funcoes",
+        "HOMEPATH",
         "iterrows",
         "Navegacao",
         "nomearquivo",
@@ -17,7 +22,10 @@
         "periodo",
         "registrosvlistacadastrodesolicitacaodecompras",
         "robo",
+        "Saidas",
         "Solicitacao",
+        "testetabela",
+        "Unitario",
         "usuario"
     ]
 }
