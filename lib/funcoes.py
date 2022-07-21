@@ -42,8 +42,8 @@ dic = pd.read_excel(caminho, sheet_name=tabela, header=cabecalho, dtype=str)
 almoxarifado = str(dic['Almoxarifado'][0])
 empresa = str(dic['Empresa'][0])
 
-print('🚩 A Empresa selecionada é: 🌈️ ' + empresa)
-print('🚩 O Almoxarifado selecionado é: 🌈️ ' + almoxarifado)
+print('🚩 A Empresa selecionada é: 📣 ' + empresa)
+print('🚩 O Almoxarifado selecionado é: 📣 ' + almoxarifado)
 
 # Parametros de Ambiente
 periodo = date.today().strftime("%d/%m/%Y")
@@ -66,8 +66,9 @@ options.add_experimental_option('excludeSwitches', ['enable-logging'])
 path = application_path + '\chromedriver'
 driver = webdriver.Chrome(executable_path=path, chrome_options=options)
 driver.maximize_window()
-#driver.get("http://transnet.grupocsc.com.br/sgtweb/")
+# driver.get("http://transnet.grupocsc.com.br/sgtweb/")
 driver.get("http://homolog.vicosa.transoft.com.br/sgtweb/")
+
 
 def fLogin():
     try:
@@ -85,6 +86,7 @@ def fLogin():
         input('Pressione Enter para continuar tentar novamente...')
         fLogin()
 
+
 def fNavegacaoCompras():
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.LINK_TEXT, 'Módulos'))).click()
@@ -98,14 +100,15 @@ def fNavegacaoCompras():
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.LINK_TEXT, 'Solicitação de Compras'))).click()
 
+
 def fFiltrosSolicitacao():
-    #Listar todos os campos de filtros.
+    # Listar todos os campos de filtros.
     formulario = driver.find_element(By.NAME, 'formulario')
-    
-    #Pegar todos os inputs do formulário.
+
+    # Pegar todos os inputs do formulário.
     formularioInputs = formulario.find_elements(By.TAG_NAME, 'input')
-    
-    #Limpar todos os campos e preencher campos necessários.
+
+    # Limpar todos os campos e preencher campos necessários.
     for item in formularioInputs:
         driver.execute_script(
             "arguments[0].setAttribute('value',arguments[1])", item, '')
@@ -117,10 +120,10 @@ def fFiltrosSolicitacao():
             driver.execute_script(
                 "arguments[0].setAttribute('value',arguments[1])", item, periodo)
 
-    #Pegar todos os selects do formulário.
+    # Pegar todos os selects do formulário.
     formularioSelects = formulario.find_elements(By.TAG_NAME, 'select')
 
-    #Limpar todos os campos e preencher campos necessários.
+    # Limpar todos os campos e preencher campos necessários.
     for item in formularioSelects:
         switch = (item.get_attribute('name'))
         if switch == 'csTipo':
@@ -138,6 +141,7 @@ def fFiltrosSolicitacao():
 
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.NAME, 'Pesquisar'))).click()
+
 
 def fAbrirSolicitacao():
     # Aguardar pesquisa terminar
@@ -183,18 +187,20 @@ def fAbrirSolicitacao():
         linha = driver.find_elements(By.CLASS_NAME, 'linha1')
         linha[0].find_element(By.TAG_NAME, 'a').click()
 
+
 def fPreencherItensDaCotacao():
     time.sleep(1)
     for index, linha in df.iterrows():
+        time.sleep(1)
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.NAME, 'input_idItem'))).click()
-
+        time.sleep(1)
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.NAME, 'input_idItem'))).clear()
-
+        time.sleep(1)
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.NAME, 'input_idItem'))).send_keys(linha['Codigo'])
-
+        time.sleep(1)
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.NAME, 'input_idItem'))).send_keys(Keys.ENTER)
 
@@ -222,29 +228,17 @@ def fPreencherItensDaCotacao():
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.NAME, 'btnRelacionar'))).click()
 
-        # Primeiro Alerta - Quantidade relacionada.
+        alertaSaida = []
         try:
-            WebDriverWait(driver, 2).until(EC.alert_is_present())
-            while EC.alert_is_present():
-                WebDriverWait(driver, 1).until(EC.alert_is_present())
+            while WebDriverWait(driver, 2).until(EC.alert_is_present()):
                 alerta = driver.switch_to.alert
                 alerta_texto = alerta.text
-                if alerta_texto == 'Atenção! Saldo atual maior que a quantidade máxima prevista para o item.':
-                    dataSaidaAlertas.append(alerta_texto)
-                    alerta.accept()
-
-                elif alerta_texto == 'Produto já consta na lista!':
-                    # print(alerta_texto)
-                    dataSaidaAlertas.append(alerta_texto)
-                    alerta.accept()
-
-                elif alerta_texto == 'Selecione um Produto para Relacionar!':
-                    # print(alerta_texto)
-                    dataSaidaAlertas.append(alerta_texto)
-                    alerta.accept()
-
+                alertaSaida.append(alerta_texto)
+                alerta.accept()
         except:
             pass
+                   
+        dataSaidaAlertas.append(alertaSaida)
 
         WebDriverWait(driver, 5).until(
             EC.presence_of_element_located((By.NAME, 'Gravar'))).click()
@@ -254,45 +248,58 @@ def fPreencherItensDaCotacao():
         alerta.accept()
 
     Saidas = {'Código_Produto': dataSaidaCdProduto,
-              'Qnt': dataSaidaQnt, 'Alerta': [dataSaidaAlertas]}
+              'Qnt': dataSaidaQnt, 'Alerta': dataSaidaAlertas}
 
     dfSaida = pd.DataFrame.from_dict(Saidas, orient='index').T
     caminhosaida = os.path.join(os.environ["HOMEPATH"], "Desktop")
     dfSaida.to_csv(caminhosaida + '\\' + 'Cotacao_Eventos_' + datetime.now().strftime(
         "%m_%d_%H_%M_%S") + '.csv', index=False, sep=';', encoding='utf-8')
-        
-def fRelatorioProdutosCotacao():
-    WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'colunaslista')))
-    
-    WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'lista')))
-                                    
-    #Construção do Cabeçalho do Relatório.
-    listaCabecalho = ['Produto', 'Referencia', 'Quantidade', 'Saldo Atual', 'Valor Unitário', 'Valor Total']
 
-    ## Fazer cabeçalho da tabela de forma dinâmica.
+
+def fRelatorioProdutosCotacao():
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_all_elements_located((By.CLASS_NAME, 'colunaslista')))
+
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_all_elements_located((By.CLASS_NAME, 'lista')))
+
+    # Construção do Cabeçalho do Relatório.
+    listaCabecalho = ['Produto', 'Referencia', 'Quantidade',
+                      'Saldo Atual', 'Valor Unitário', 'Valor Total']
+
+    # Fazer cabeçalho da tabela de forma dinâmica.
     # listaSolicitacaoCabecalho = driver.find_elements(By.CLASS_NAME, 'colunaslista')
     # for item in listaSolicitacaoCabecalho:
     #     listaCabecalho.append(item.text)
-    
-    #Construção da Lista de Itens Solicitados.
+
+    # Construção da Lista de Itens Solicitados.
     divTabelaSolicitacao = driver.find_element(By.CLASS_NAME, "lista")
-    corpoTabelaSolicitacao = divTabelaSolicitacao.find_element(By.TAG_NAME, "tbody")
-    linhasTabelaSolicitacao = corpoTabelaSolicitacao.find_elements(By.TAG_NAME, "tr")
+    corpoTabelaSolicitacao = divTabelaSolicitacao.find_element(
+        By.TAG_NAME, "tbody")
+    linhasTabelaSolicitacao = corpoTabelaSolicitacao.find_elements(
+        By.TAG_NAME, "tr")
 
     card = []
 
     for item in range(len(linhasTabelaSolicitacao)):
-        produtoSolicitado = linhasTabelaSolicitacao[item].find_elements(By.TAG_NAME, "td")[0]
-        referenciaSolicitada = linhasTabelaSolicitacao[item].find_elements(By.TAG_NAME, "td")[1]
-        saldoAltualSolicitado = linhasTabelaSolicitacao[item].find_elements(By.TAG_NAME, "td")[6]
-        valorUnitarioSolicitado = linhasTabelaSolicitacao[item].find_elements(By.TAG_NAME, "td")[7]
-        valorTotalSolicitado = linhasTabelaSolicitacao[item].find_elements(By.TAG_NAME, "td")[8]
-        quantidadeSolicitada = linhasTabelaSolicitacao[item].find_elements(By.TAG_NAME, "input")[1]
-        teste = [produtoSolicitado.text, referenciaSolicitada.text, driver.execute_script("return arguments[0].value", quantidadeSolicitada), saldoAltualSolicitado.text, valorUnitarioSolicitado.text, valorTotalSolicitado.text]
+        produtoSolicitado = linhasTabelaSolicitacao[item].find_elements(By.TAG_NAME, "td")[
+            0]
+        referenciaSolicitada = linhasTabelaSolicitacao[item].find_elements(
+            By.TAG_NAME, "td")[1]
+        saldoAltualSolicitado = linhasTabelaSolicitacao[item].find_elements(
+            By.TAG_NAME, "td")[6]
+        valorUnitarioSolicitado = linhasTabelaSolicitacao[item].find_elements(
+            By.TAG_NAME, "td")[7]
+        valorTotalSolicitado = linhasTabelaSolicitacao[item].find_elements(
+            By.TAG_NAME, "td")[8]
+        quantidadeSolicitada = linhasTabelaSolicitacao[item].find_elements(
+            By.TAG_NAME, "input")[1]
+        teste = [produtoSolicitado.text, referenciaSolicitada.text, driver.execute_script(
+            "return arguments[0].value", quantidadeSolicitada), saldoAltualSolicitado.text, valorUnitarioSolicitado.text, valorTotalSolicitado.text]
         card.append(teste)
-        
+
     print(card)
-    
+
     dfteste = pd.DataFrame(card, columns=listaCabecalho)
     caminhosaida = os.path.join(os.environ["HOMEPATH"], "Desktop")
     dfteste.to_csv(caminhosaida + '\\' + 'Cotacao_Solicitados_' + datetime.now().strftime(
