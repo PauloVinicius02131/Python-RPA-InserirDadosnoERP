@@ -66,8 +66,8 @@ options.add_experimental_option('excludeSwitches', ['enable-logging'])
 path = application_path + '\chromedriver'
 driver = webdriver.Chrome(executable_path=path, chrome_options=options)
 driver.maximize_window()
-# driver.get("http://transnet.grupocsc.com.br/sgtweb/")
-driver.get("http://homolog.vicosa.transoft.com.br/sgtweb/")
+driver.get("http://transnet.grupocsc.com.br/sgtweb/")
+# driver.get("http://homolog.vicosa.transoft.com.br/sgtweb/")
 
 
 def fLogin():
@@ -134,7 +134,7 @@ def fFiltrosSolicitacao():
                    ).select_by_visible_text('Aberta')
         elif switch == 'idAlmoxarifado':
             Select(driver.find_element(By.NAME, 'idAlmoxarifado')).select_by_visible_text(
-                'Almoxarifado Ansal')  # Fazer depara para o almoxarifado selecionado
+                almoxarifado)  # Fazer depara para o almoxarifado selecionado
         elif switch == 'idUsuario':
             Select(driver.find_element(By.NAME, 'idUsuario')
                    ).select_by_visible_text('AUTOBOT')
@@ -166,10 +166,10 @@ def fAbrirSolicitacao():
                 switch = (item.get_attribute('name'))
                 if switch == 'idAlmoxarifado':
                     Select(driver.find_element(By.NAME, 'idAlmoxarifado')
-                           ).select_by_visible_text('Almoxarifado Ansal')
+                           ).select_by_visible_text(almoxarifado)
                 elif switch == 'idEmpresa':
                     Select(driver.find_element(By.NAME, 'idEmpresa')
-                           ).select_by_visible_text('ANSAL Matriz')
+                           ).select_by_visible_text(empresa)
                 elif switch == 'csTipo':
                     Select(driver.find_element(By.NAME, 'csTipo')
                            ).select_by_visible_text('Normal')
@@ -184,25 +184,24 @@ def fAbrirSolicitacao():
     else:
         print(
             'Achei uma solicitação ja criada hoje em meu nome com status:\u001b[1m Aberta. \u001b[0m')
-        linha = driver.find_elements(By.CLASS_NAME, 'linha1')
-        linha[0].find_element(By.TAG_NAME, 'a').click()
+        tabela = driver.find_element(
+            By.ID, 'registrosvlistacadastrodesolicitacaodecompras').find_element(By.TAG_NAME, 'tbody')
+        linha = tabela.find_elements(By.TAG_NAME, 'tr')
+        linha[0].find_elements(By.TAG_NAME, 'td')[0].click()
 
 
 def fPreencherItensDaCotacao():
     time.sleep(1)
     for index, linha in df.iterrows():
-        time.sleep(1)
         WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.NAME, 'input_idItem'))).click()
-        time.sleep(1)
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.NAME, 'input_idItem'))).clear()
-        time.sleep(1)
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.NAME, 'input_idItem'))).send_keys(linha['Codigo'])
-        time.sleep(1)
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.NAME, 'input_idItem'))).send_keys(Keys.ENTER)
+            EC.invisibility_of_element((By.ID, 'ajaxLoader')))
+
+        driver.find_element(By.NAME, 'input_idItem').clear()
+
+        WebDriverWait(driver, 10).until(lambda driver: len(driver.execute_script(
+            'return document.getElementById("input_idItem").value')) == 0)
+
+        driver.find_element(By.NAME, 'input_idItem').send_keys(linha['Codigo'])
 
         # Esperar encontrar o produto.
         WebDriverWait(driver, 10).until(lambda driver: len(driver.execute_script(
@@ -211,41 +210,38 @@ def fPreencherItensDaCotacao():
         dataSaidaCdProduto.append(driver.execute_script(
             'return document.getElementById("input_idItem").value'))
 
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.NAME, 'qtInicialItem'))).click()
-
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.NAME, 'qtInicialItem'))).send_keys(Keys.CONTROL, 'a')
-
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.NAME, 'qtInicialItem'))).send_keys(Keys.BACKSPACE)
-
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.NAME, 'qtInicialItem'))).send_keys(linha['Qnt'])
+        driver.find_element(By.NAME, 'qtInicialItem').click()
+        driver.find_element(By.NAME, 'qtInicialItem').send_keys(
+            Keys.CONTROL, 'a')
+        driver.find_element(By.NAME, 'qtInicialItem').send_keys(Keys.BACKSPACE)
+        driver.find_element(By.NAME, 'qtInicialItem').send_keys(linha['Qnt'])
 
         dataSaidaQnt.append(linha['Qnt'])
 
         WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.NAME, 'btnRelacionar'))).click()
+            EC.element_to_be_clickable((By.NAME, 'btnRelacionar'))).click()
 
         alertaSaida = []
         try:
-            while WebDriverWait(driver, 2).until(EC.alert_is_present()):
+            while WebDriverWait(driver, 5).until(EC.alert_is_present()):
                 alerta = driver.switch_to.alert
                 alerta_texto = alerta.text
                 alertaSaida.append(alerta_texto)
                 alerta.accept()
         except:
             pass
-                   
+
         dataSaidaAlertas.append(alertaSaida)
 
         WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.NAME, 'Gravar'))).click()
+            EC.element_to_be_clickable((By.NAME, 'Gravar'))).click()
 
         WebDriverWait(driver, 3).until(EC.alert_is_present())
         alerta = driver.switch_to.alert
         alerta.accept()
+
+        WebDriverWait(driver, 10).until(
+            EC.invisibility_of_element((By.ID, 'ajaxLoader')))
 
     Saidas = {'Código_Produto': dataSaidaCdProduto,
               'Qnt': dataSaidaQnt, 'Alerta': dataSaidaAlertas}
