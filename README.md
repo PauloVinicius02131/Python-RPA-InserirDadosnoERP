@@ -15,7 +15,7 @@
 
    O objetivo principal é minimizar o custo de horas de 12 funcionários que por semana gastam cerca de 1 hora cada para inserir tais dados.
 
-    O projeto foi desenvolvido em Python 3.6 e utiliza a biblioteca Selenium para automatizar o processo de inserção de dados no ERP.
+   O projeto foi desenvolvido em Python 3.6 e utiliza a biblioteca Selenium para automatizar o processo de inserção de dados no ERP.
 
 ## Instalação 
 
@@ -36,13 +36,13 @@
 
 ## Uso
 
-    Na planilha entrada/DadosEntrada.xlsx deve ser inserido os dados de acordo com o modelo.
-    
-    Para utilizar o projeto basta executar o arquivo project.py
+ Na planilha entrada/DadosEntrada.xlsx deve ser inserido os dados de acordo com o modelo.
 
-    Após a finalização do processo de inserção de dados o sistema irá gerar um arquivo com a data e hora da execução no formato .csv na área de trabalho do usuário que executou o projeto.
+ Para utilizar o projeto basta executar o arquivo project.py
 
-    Este arquivo possui as informações de cada peça inserida no sistema. Podendo conter alertas de erros ou informações de sucesso.
+ Após a finalização do processo de inserção de dados o sistema irá gerar um arquivo com a data e hora da execução no formato .csv na área de trabalho do usuário que executou o projeto.
+
+Este arquivo possui as informações de cada peça inserida no sistema. Podendo conter alertas de erros ou informações de sucesso.
 
 
 ## Contribuição
