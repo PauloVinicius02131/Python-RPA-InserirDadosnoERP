@@ -19,7 +19,12 @@ import sys
 
 import pandas as pd
 
-# Parâmetros Tabela Excel Input de Dados.
+print('💾 Iniciando Programa ... \n ⏱: ' +
+      str(datetime.now().strftime("%m/%d %H:%M:%S")))
+
+print('\n 📚 Carregando Tabela de Dados ... \n')
+
+# Parâmetros Tabela Excel para Input de Dados.
 caminho = os.path.abspath(__file__ + "/../../")
 caminho = caminho + "\entrada"
 nomearquivo = "\dadosEntrada.xlsx"
@@ -32,40 +37,42 @@ df = pd.read_excel(caminho, sheet_name=tabela, header=cabecalho)
 df = df['robo'].str.split(';', expand=True)
 df.columns = ['Codigo', 'Qnt']
 
-print(df.head())
 
-# Dicionario Input de Dados.
+print(' ✅ Tabela Carregada, Amostra dos dados: \n', '\n', df.head())
+# Parametros Cabecalhos para Input de Dados.
 tabela = "Cabecalhos"
 cabecalho = 0
 
+# Dataframe Cabecalho para Input de Dados.
 dic = pd.read_excel(caminho, sheet_name=tabela, header=cabecalho, dtype=str)
 almoxarifado = str(dic['Almoxarifado'][0])
 empresa = str(dic['Empresa'][0])
 
-print('🚩 A Empresa selecionada é: 📣 ' + empresa)
-print('🚩 O Almoxarifado selecionado é: 📣 ' + almoxarifado)
+print('\n 🚩 A Empresa selecionada é: 📣 ' + empresa)
+print('\n 🚩 O Almoxarifado selecionado é: 📣 ' + almoxarifado)
 
-# Parametros de Ambiente
+# Parametros de Ambiente para utilização no Transnet.
 periodo = date.today().strftime("%d/%m/%Y")
 usuario = 'AUTOBOT'
 
+# Parametros de Ambiente para utilização nas Saidas.
 dataSaidaCdProduto = []
 dataSaidaQnt = []
 dataSaidaAlertas = []
 
-# Encontrar caminho do chrome driver
+# Encontrar Chrome Driver na pasta do projeto.
 if getattr(sys, 'frozen', False):
     application_path = os.path.dirname(sys.executable)
 elif __file__:
     application_path = os.path.dirname(__file__)
 
-# Variavel do driver
+# Variaveis de configuração do driver.
 options = Options()
 options.add_experimental_option('excludeSwitches', ['enable-logging'])
-
 path = application_path + '\chromedriver'
 driver = webdriver.Chrome(executable_path=path, chrome_options=options)
 driver.maximize_window()
+
 driver.get("http://transnet.grupocsc.com.br/sgtweb/")
 # driver.get("http://homolog.vicosa.transoft.com.br/sgtweb/")
 
@@ -82,7 +89,7 @@ def fLogin():
         driver.find_element(
             By.XPATH, "/html/body/div/div/div[1]/div[2]/div/div/form/div[4]/div/input").click()
     except:
-        print('Erro no Login')
+        print('Erro no Login - Estouro')
         input('Pressione Enter para continuar tentar novamente...')
         fLogin()
 
@@ -144,7 +151,7 @@ def fFiltrosSolicitacao():
 
 
 def fAbrirSolicitacao():
-    # Aguardar pesquisa terminar
+    # Aguardar pesquisa terminar.
     WebDriverWait(driver, 10).until(
         EC.invisibility_of_element((By.ID, 'ajaxLoader')))
 
@@ -181,6 +188,7 @@ def fAbrirSolicitacao():
 
         except:
             print('Erro ao cadastrar uma nova solicitação de compra.')
+
     else:
         print(
             'Achei uma solicitação ja criada hoje em meu nome com status:\u001b[1m Aberta. \u001b[0m')
@@ -223,7 +231,7 @@ def fPreencherItensDaCotacao():
 
         alertaSaida = []
         try:
-            while WebDriverWait(driver, 5).until(EC.alert_is_present()):
+            while WebDriverWait(driver, 4).until(EC.alert_is_present()):
                 alerta = driver.switch_to.alert
                 alerta_texto = alerta.text
                 alertaSaida.append(alerta_texto)
@@ -236,6 +244,7 @@ def fPreencherItensDaCotacao():
         WebDriverWait(driver, 5).until(
             EC.element_to_be_clickable((By.NAME, 'Gravar'))).click()
 
+        # Colocar while e salvar no append para verificar se o item foi inserido com sucesso.
         WebDriverWait(driver, 3).until(EC.alert_is_present())
         alerta = driver.switch_to.alert
         alerta.accept()

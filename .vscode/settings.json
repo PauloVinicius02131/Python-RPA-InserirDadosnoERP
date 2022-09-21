@@ -9,6 +9,7 @@
         "Codigo",
         "colunaslista",
         "Cotacao",
+        "Dataframe",
         "dfteste",
         "dtype",
         "formulario",
@@ -26,6 +27,7 @@
         "Solicitacao",
         "testetabela",
         "Unitario",
-        "usuario"
+        "usuario",
+        "Variaveis"
     ]
 }
