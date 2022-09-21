@@ -73,18 +73,19 @@ path = application_path + '\chromedriver'
 driver = webdriver.Chrome(executable_path=path, chrome_options=options)
 driver.maximize_window()
 
-driver.get("http://transnet.grupocsc.com.br/sgtweb/")
-# driver.get("http://homolog.vicosa.transoft.com.br/sgtweb/")
+URL = ""
+driver.get(URL)
+
 
 
 def fLogin():
     try:
         # Digitar Login.
         WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.ID, "edtLogin"))).send_keys("autobot")
+            EC.presence_of_element_located((By.ID, "edtLogin"))).send_keys("")
         # Digitar Senha.
         WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.ID, "edtSenha"))).send_keys("grupo2@22")
+            EC.presence_of_element_located((By.ID, "edtSenha"))).send_keys("")
         # Clicar Login.
         driver.find_element(
             By.XPATH, "/html/body/div/div/div[1]/div[2]/div/div/form/div[4]/div/input").click()
